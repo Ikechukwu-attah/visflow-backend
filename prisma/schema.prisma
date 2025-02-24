@@ -12,3 +12,13 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id           String   @id @default(uuid())
+  fullname     String
+  email        String   @unique
+  password     String
+  role         String   @default("user")
+  refreshToken String? // Optional, only stored if user logs in
+  createdAt    DateTime @default(now())
+}
