@@ -22,7 +22,7 @@ import { PrismaService } from './database/prisma.service';
     PaymentModule,
     ChatbotModule,
   ],
-  controllers: [AppController, PrismaService],
+  controllers: [AppController],
   providers: [AppService, PrismaService],
 })
 export class AppModule {}

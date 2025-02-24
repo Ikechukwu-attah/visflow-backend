@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    */
   validate(payload: UserDto) {
     return {
-      userId: payload.sub, // `sub` usually refers to user ID in JWT payload
+      id: payload.sub, // `sub` usually refers to user ID in JWT payload
       email: payload.email,
       role: payload.role, // Add role if applicable
     };
