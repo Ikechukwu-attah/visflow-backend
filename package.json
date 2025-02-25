@@ -34,8 +34,11 @@
     "openai": "^4.85.4",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdf-parse": "^1.1.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sharp": "^0.33.5",
+    "tesseract.js": "^6.0.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
@@ -53,7 +56,10 @@
     "@types/node": "^22.10.7",
     "@types/nodemailer": "^6.4.17",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/sharp": "^0.32.0",
     "@types/supertest": "^6.0.2",
+    "@types/tesseract.js": "^2.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

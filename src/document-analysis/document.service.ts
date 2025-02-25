@@ -15,8 +15,14 @@ export class DocumentService {
     if (!file || typeof file !== 'object') {
       throw new BadRequestException('No file uploaded or invalid file format');
     }
-    console.log('Received userId:', userId);
-    // Ensure file has required properties
+
+    console.log('📥 Received file for upload:', {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.buffer.length,
+    });
+
+    // Validate required file properties
     const { originalname, mimetype, buffer } = file;
     if (!originalname || !mimetype || !buffer) {
       throw new BadRequestException(
@@ -24,38 +30,57 @@ export class DocumentService {
       );
     }
 
+    // ✅ Ensure userId is a valid UUID
+    if (!isUUID(userId)) {
+      throw new BadRequestException('User ID is not a valid UUID');
+    }
+
     try {
       const fileId: string = uuidv4(); // ✅ Generate a proper UUID
-      console.log('fileId', fileId);
+      console.log('🆔 Generated File ID:', fileId);
 
-      // ✅ Validate UUID before inserting
+      // Validate UUID before inserting
       if (!isUUID(fileId)) {
         throw new BadRequestException('Generated ID is not a valid UUID');
       }
-      if (!isUUID(userId)) {
-        throw new BadRequestException('User ID is not a valid UUID');
-      }
-      const uploadsDir = path.join(__dirname, '../../../uploads'); // ✅ Ensure absolute path
-      const filePath = path.join(
-        uploadsDir,
-        `${fileId}-${originalname.trim()}`,
-      );
 
-      // ✅ Ensure `uploads/` directory exists
+      // ✅ Restrict allowed file types (PDFs & images)
+      const allowedMimeTypes = [
+        'application/pdf',
+        'image/png',
+        'image/jpeg',
+        'image/jpg',
+      ];
+      if (!allowedMimeTypes.includes(mimetype)) {
+        throw new BadRequestException('Unsupported file type.');
+      }
+
+      // ✅ Define file storage path
+      const uploadsDir = path.join(__dirname, '../../../uploads'); // Ensure absolute path
       if (!fs.existsSync(uploadsDir)) {
         fs.mkdirSync(uploadsDir, { recursive: true });
+        console.log('📂 Created uploads directory:', uploadsDir);
       }
+
+      // ✅ Append timestamp to avoid filename collisions
+      const timestamp = Date.now();
+      const sanitizedFileName = originalname.replace(/\s+/g, '_'); // Replace spaces
+      const filePath = path.join(
+        uploadsDir,
+        `${fileId}-${timestamp}-${sanitizedFileName}`,
+      );
 
       // ✅ Ensure buffer is valid
       const fileBuffer = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
 
       // ✅ Save file locally
       fs.writeFileSync(filePath, fileBuffer);
+      console.log('✅ File saved successfully:', filePath);
 
       // ✅ Save document metadata in the database
       await this.prisma.document.create({
         data: {
-          id: fileId, // ✅ Ensure ID is a proper UUID
+          id: fileId,
           userId,
           fileName: originalname,
           fileType: mimetype,
@@ -64,9 +89,15 @@ export class DocumentService {
         },
       });
 
+      console.log('📄 File metadata stored in DB:', {
+        fileId,
+        userId,
+        filePath,
+      });
+
       return { message: 'File uploaded successfully', documentId: fileId };
     } catch (error: unknown) {
-      console.error('Upload Error:', error);
+      console.error('❌ Upload Error:', error);
 
       if (error instanceof Error) {
         throw new BadRequestException(error.message);

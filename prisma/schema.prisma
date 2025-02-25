@@ -14,12 +14,13 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(uuid()) @db.Uuid // ✅ Ensure UUID type
-  fullname     String
-  email        String     @unique
-  password     String
-  verifyToken  String?
-  resetToken   String?
+  id          String  @id @default(uuid()) @db.Uuid // ✅ Ensure UUID type
+  fullname    String
+  email       String  @unique
+  password    String
+  verifyToken String?
+  resetToken  String?
+
   isVerified   Boolean    @default(false)
   role         String     @default("user")
   refreshToken String?
@@ -28,15 +29,16 @@ model User {
 }
 
 model Document {
-  id              String   @id @default(uuid()) @db.Uuid
-  userId          String   @db.Uuid // ✅ Already correct
-  fileName        String
-  fileType        String
-  filePath        String   @unique
-  status          String   @default("pending")
-  fraudDetected   Boolean  @default(false)
-  missingFields   String[]
-  recommendations String?
-  createdAt       DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id])
+  id                    String   @id @default(uuid()) @db.Uuid
+  userId                String   @db.Uuid // ✅ Already correct
+  fileName              String
+  fileType              String
+  predictedDocumentType String?
+  filePath              String   @unique
+  status                String   @default("pending")
+  fraudDetected         Boolean  @default(false)
+  missingFields         String[]
+  recommendations       String?
+  createdAt             DateTime @default(now())
+  user                  User     @relation(fields: [userId], references: [id])
 }
