@@ -10,6 +10,7 @@ import { ConsultantMatchingModule } from './consultant-matching/consultant-match
 import { PaymentModule } from './payment/payment.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { PrismaService } from './database/prisma.service';
+import { DocumentAnalysisModule } from './document-analysis/document-analysis.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PrismaService } from './database/prisma.service';
     ConsultantMatchingModule,
     PaymentModule,
     ChatbotModule,
+    DocumentAnalysisModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
