@@ -8,13 +8,15 @@ import { OpenAI } from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as pdf from 'pdf-parse';
-import Tesseract from 'tesseract.js';
-import sharp from 'sharp';
+import * as Tesseract from 'tesseract.js';
+import * as sharp from 'sharp';
 
 interface AIAnalysis {
   fraudDetected: boolean;
   missingFields: string[];
   recommendations: string;
+  confidence?: number;
+  fraudReasons?: string[];
 }
 
 @Injectable()
@@ -69,6 +71,8 @@ export class DocumentAnalysisService {
         fraudDetected: aiAnalysis.fraudDetected,
         missingFields: aiAnalysis.missingFields,
         recommendations: aiAnalysis.recommendations,
+        confidence: aiAnalysis.confidence,
+        fraudReasons: aiAnalysis.fraudReasons,
         status: 'completed',
       },
     });
@@ -103,10 +107,9 @@ export class DocumentAnalysisService {
           .toBuffer();
 
         // ✅ Extract text from image using `tesseract.js`
-        const { data } = await Tesseract.recognize(processedImageBuffer, 'eng');
-
-        console.log('🔹 Extracted Image Text:', data.text); // ✅ Log Extracted Text
-        return data.text?.trim() || null;
+        const result = await Tesseract.recognize(processedImageBuffer, 'eng');
+        console.log('🔹 Extracted Image Text:', result.data.text);
+        return result.data.text?.trim() || null; // ✅ Log Extracted Text
       } else {
         throw new BadRequestException('Unsupported file type.');
       }
@@ -122,21 +125,34 @@ export class DocumentAnalysisService {
     console.log('Sending to GPT-4 for analysis...');
 
     const prompt = `
-    You are an AI trained to analyze visa documents. 
-    Given the document text below, determine:
-    - If it meets standard visa application requirements.
-    - Detect any fraud indicators.
-    - Identify missing fields (e.g., signature, date, official stamp).
+         You are an AI expert in analyzing visa-related documents for fraud detection.
+Your goal is to determine if a document is **authentic** or **potentially fraudulent**.
 
-    Document Text:
-    "${documentText}"
+### **1️⃣ Authenticity Checks**:
+   - Compare the extracted text with official visa-related templates.
+   - Ensure all required fields are present (e.g., signatures, government stamps, unique document numbers).
+   - Verify if the document text follows a standard, professional format.
 
-    Provide a structured JSON response **WITHOUT markdown formatting**:
-    {
+### **2️⃣ Fraud Indicators (ONLY flag fraud if STRONG evidence exists)**:
+   - **Fake or missing official stamps.**
+   - **Inconsistent document structure** (e.g., missing sections, abnormal fonts, improper alignment).
+   - **Unusual wording or non-standard formatting**.
+   - **Blurry, manipulated, or incomplete text in scanned images.**
+   - **Altered dates or names (e.g., mismatch between document content and official records).**
+   - **Fake government references or invalid document numbers.**
+
+### **3️⃣ Response Format**:
+   Provide a JSON response **without markdown formatting**:
+   {
       "fraudDetected": true/false,
+      "confidence": 0-100, 
+      "fraudReasons": ["Missing official stamp", "Date manipulation"],  
       "missingFields": ["Signature", "Date"],
-      "recommendations": "Ensure the document has a valid official stamp."
-    }
+      "recommendations": "Ensure the document has an official government stamp."
+   }
+
+### **Here is the extracted document text for analysis**:
+"${documentText}"
   `;
 
     try {
@@ -163,16 +179,28 @@ export class DocumentAnalysisService {
       let analysis: AIAnalysis;
       try {
         analysis = JSON.parse(content) as AIAnalysis;
+        console.log('🔹 AI Analysis:', analysis);
+
+        // ✅ Ensure fraud detection is only applied for confidence > 85%
+        if (analysis.fraudDetected && (analysis.confidence ?? 0) < 85) {
+          console.log(
+            '⚠ Fraud confidence too low, overriding fraud detection',
+          );
+          analysis.fraudDetected = false;
+          analysis.fraudReasons = []; // Clear fraud reasons
+        }
+
+        return analysis;
       } catch (error) {
         console.error('❌ Failed to parse AI analysis response:', error);
         throw new Error('Failed to parse AI analysis response.');
       }
-
-      return analysis;
     } catch (error) {
       console.error('GPT-4 Analysis Error:', error);
       return {
         fraudDetected: false,
+        confidence: 0,
+        fraudReasons: [],
         missingFields: [],
         recommendations: 'No analysis available.',
       };

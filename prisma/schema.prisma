@@ -38,6 +38,8 @@ model Document {
   status                String   @default("pending")
   fraudDetected         Boolean  @default(false)
   missingFields         String[]
+  fraudReasons          String[] // ✅ Store fraud reasons as an array
+  confidence            Int?
   recommendations       String?
   createdAt             DateTime @default(now())
   user                  User     @relation(fields: [userId], references: [id])

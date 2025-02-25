@@ -8,8 +8,8 @@ import { OpenAI } from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as pdf from 'pdf-parse';
-import Tesseract from 'tesseract.js';
-import sharp from 'sharp';
+import * as Tesseract from 'tesseract.js';
+import * as sharp from 'sharp';
 
 export interface ClassificationResponse {
   predictedType: string; // ✅ AI-predicted document type
@@ -102,8 +102,8 @@ export class DocumentClassificationService {
           .resize(1000)
           .toBuffer();
 
-        const { data } = await Tesseract.recognize(processedImageBuffer, 'eng');
-        extractedText = data.text?.trim() || null;
+        const result = await Tesseract.recognize(processedImageBuffer, 'eng');
+        extractedText = result.data.text?.trim() || null;
       } else {
         throw new BadRequestException(
           `Unsupported file type detected: ${fileType}`,
