@@ -125,33 +125,36 @@ export class DocumentAnalysisService {
     console.log('Sending to GPT-4 for analysis...');
 
     const prompt = `
-         You are an AI expert in analyzing visa-related documents for fraud detection.
-Your goal is to determine if a document is **authentic** or **potentially fraudulent**.
+          You are an AI trained to analyze **ALL visa-related documents** for fraud detection.
+Your goal is to assess whether a document is **authentic** or **potentially fraudulent** based on these checks:
 
-### **1️⃣ Authenticity Checks**:
-   - Compare the extracted text with official visa-related templates.
-   - Ensure all required fields are present (e.g., signatures, government stamps, unique document numbers).
-   - Verify if the document text follows a standard, professional format.
+📌 **1️⃣ Document Integrity Checks**
+   - Compare extracted text with official templates.
+   - Ensure required sections (e.g., signatures, official seals, dates) are present.
+   - Verify if document follows standard structure.
 
-### **2️⃣ Fraud Indicators (ONLY flag fraud if STRONG evidence exists)**:
-   - **Fake or missing official stamps.**
-   - **Inconsistent document structure** (e.g., missing sections, abnormal fonts, improper alignment).
-   - **Unusual wording or non-standard formatting**.
-   - **Blurry, manipulated, or incomplete text in scanned images.**
-   - **Altered dates or names (e.g., mismatch between document content and official records).**
-   - **Fake government references or invalid document numbers.**
+📌 **2️⃣ Fraud Detection (Only If Strong Evidence Exists)**
+   - **Manipulated or missing official seals & stamps.**
+   - **Inconsistent document structure or formatting.**
+   - **Mismatched details (e.g., employer name vs. company registry).**
+   - **Irregular bank transactions in financial statements.**
+   - **Fake or forged supporting letters.**
+   - **Altered or missing signatures on legal documents.**
 
-### **3️⃣ Response Format**:
-   Provide a JSON response **without markdown formatting**:
-   {
-      "fraudDetected": true/false,
-      "confidence": 0-100, 
-      "fraudReasons": ["Missing official stamp", "Date manipulation"],  
-      "missingFields": ["Signature", "Date"],
-      "recommendations": "Ensure the document has an official government stamp."
-   }
+📌 **3️⃣ Expected JSON Response**
+Return a JSON response **WITHOUT markdown formatting**:
+{
+  "fraudDetected": true/false,
+  "confidence": 0-100,
+  "fraudReasons": [
+    "Discrepancy in employer details: Job offer states 'ABC Corp', company registry shows 'XYZ Ltd.'",
+    "Inconsistent bank transactions: Account shows large deposits with no source."
+  ],
+  "missingFields": ["Signature", "Official Stamp"],
+  "recommendations": "Verify employer information against official records."
+}
 
-### **Here is the extracted document text for analysis**:
+📌 **Extracted Document Text:**
 "${documentText}"
   `;
 

@@ -11,6 +11,7 @@ import { PaymentModule } from './payment/payment.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { PrismaService } from './database/prisma.service';
 import { DocumentAnalysisModule } from './document-analysis/document-analysis.module';
+import { DocumentRequirementModule } from './document-requirement/document-requirement.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { DocumentAnalysisModule } from './document-analysis/document-analysis.mo
     PaymentModule,
     ChatbotModule,
     DocumentAnalysisModule,
+    DocumentRequirementModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
