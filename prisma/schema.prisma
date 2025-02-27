@@ -21,11 +21,12 @@ model User {
   verifyToken String?
   resetToken  String?
 
-  isVerified   Boolean    @default(false)
-  role         String     @default("user")
-  refreshToken String?
-  createdAt    DateTime   @default(now())
-  documents    Document[] // ✅ Keep plural for clarity
+  isVerified         Boolean             @default(false)
+  role               String              @default("user")
+  refreshToken       String?
+  createdAt          DateTime            @default(now())
+  documents          Document[] // ✅ Keep plural for clarity
+  generatedDocuments GeneratedDocument[] // Add opposite relation field
 }
 
 model Document {
@@ -43,4 +44,18 @@ model Document {
   recommendations       String?
   createdAt             DateTime @default(now())
   user                  User     @relation(fields: [userId], references: [id])
+}
+
+model GeneratedDocument {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String?  @db.Uuid // Optional for guests
+  visaType     String
+  documentType String
+  format       String
+  pageCount    Int
+  content      String   @db.Text // Store full document content
+  pdfPath      String   @unique // Path to generated PDF
+  createdAt    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
 }

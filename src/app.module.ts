@@ -12,6 +12,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
 import { PrismaService } from './database/prisma.service';
 import { DocumentAnalysisModule } from './document-analysis/document-analysis.module';
 import { DocumentRequirementModule } from './document-requirement/document-requirement.module';
+import { PdfGenerationService } from './pdf-generation/pdf-generation.service';
 
 @Module({
   imports: [
@@ -27,6 +28,6 @@ import { DocumentRequirementModule } from './document-requirement/document-requi
     DocumentRequirementModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService, PrismaService, PdfGenerationService],
 })
 export class AppModule {}
