@@ -1,42 +1,33 @@
 import {
   Controller,
-  Get,
   Post,
-  Param,
+  Get,
   Body,
+  Param,
   Res,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import {
-  DocumentGenerationService,
-  GeneratedDocument,
-} from './document-generation.service';
+import { DocumentGenerationService } from './document-generation.service';
+
 import * as fs from 'fs';
 import { Response } from 'express';
-
-// ✅ Define DTO for structured request body
-interface GenerateDocumentsDto {
-  userId: string;
-  visaType: string;
-  answers: Record<string, any>; // Adjust type based on actual structure
-  uploadedDocuments?: string[]; // Optional array of document URLs or paths
-}
+import { GenerateDocumentsDto } from './dto/generate-document.dto';
 
 @Controller('document-generation')
 export class DocumentGenerationController {
   constructor(private documentGenerationService: DocumentGenerationService) {}
 
-  // ✅ Generate Visa Documents
+  // ✅ Generate Documents API
   @Post('generate-content')
-  async generateDocuments(
-    @Body() data: GenerateDocumentsDto,
-  ): Promise<GeneratedDocument[]> {
-    if (!data.visaType || !data.answers) {
-      throw new BadRequestException('Visa type and answers are required.');
+  generateDocuments(@Body() data: GenerateDocumentsDto) {
+    if (!data.userId || !data.visaType || !data.answers) {
+      throw new BadRequestException(
+        'User ID, visa type, and answers are required.',
+      );
     }
-
-    return this.documentGenerationService.generateDocuments(
+    console.log('📌 Generating documents for user id :', data.userId);
+    return this.documentGenerationService.generateAndMergeDocuments(
       data.userId,
       data.visaType,
       data.answers,
@@ -44,38 +35,32 @@ export class DocumentGenerationController {
     );
   }
 
-  // ✅ API to Preview Generated PDF
-  @Get('preview/:documentId')
-  async previewUserDocuments(
-    @Param('userId') userId: string,
-    @Res() res: Response,
-  ) {
-    const documents =
-      await this.documentGenerationService.getUserGeneratedDocuments(userId);
+  // ✅ Preview Merged PDF
+  @Get('preview/:userId')
+  previewMergedDocument(@Param('userId') userId: string, @Res() res: Response) {
+    const pdfPath =
+      this.documentGenerationService.getLatestMergedPdfPath(userId);
 
-    if (!documents.length) {
-      throw new NotFoundException('No documents found for this user.');
+    if (!fs.existsSync(pdfPath)) {
+      throw new NotFoundException('No merged document available.');
     }
 
-    // Return the first document for now (or modify to preview all)
-    const pdfPath = documents[0].pdfPath;
-    if (!pdfPath) {
-      throw new NotFoundException('PDF path not found.');
-    }
     res.sendFile(pdfPath);
   }
 
-  // ✅ API to Download Generated PDF
-  @Get('download/:documentId')
-  async downloadDocument(
-    @Param('documentId') documentId: string,
+  // ✅ Download Merged PDF
+  @Get('download/:userId')
+  downloadMergedDocument(
+    @Param('userId') userId: string,
     @Res() res: Response,
   ) {
     const pdfPath =
-      await this.documentGenerationService.getGeneratedDocumentPath(documentId);
+      this.documentGenerationService.getLatestMergedPdfPath(userId);
+
     if (!fs.existsSync(pdfPath)) {
-      throw new NotFoundException('Document not found.');
+      throw new NotFoundException('No merged document available.');
     }
+
     res.download(pdfPath);
   }
 }
